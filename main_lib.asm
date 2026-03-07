@@ -1,1 +1,165 @@
-org 100h
+; ==========================================
+; MAIN_LIB.ASM - CLEAN VERSION
+; ==========================================
+
+set_vga:
+    mov ah, 00h
+    mov al, 13h
+    int 10h
+    ret
+
+set_text:
+    mov ah, 00h
+    mov al, 03h
+    int 10h
+    ret
+
+draw_pixel:
+    pusha
+    push es
+    mov ax, 0A000h
+    mov es, ax
+    mov ax, 320
+    mul dx
+    add ax, cx
+    mov di, ax
+    mov [es:di], bl
+    pop es
+    popa
+    ret
+
+delay:
+    pusha
+    mov ah, 86h
+    int 15h
+    popa
+    ret
+
+draw_text_anim:
+    pusha
+    mov ah, 02h
+    mov bh, 00h
+    int 10h
+.print_loop:
+    lodsb
+    cmp al, 0
+    je .done
+    mov ah, 0Eh
+    int 10h
+    mov cx, 0x0001
+    mov dx, 0x86A0
+    call delay
+    jmp .print_loop
+.done:
+    popa
+    ret
+
+draw_circle_anim:
+    pusha
+    mov di, si
+    xor ax, ax
+    mov bp, 1
+    sub bp, si
+.loop:
+    cmp di, ax
+    jl .done
+    call .plot8
+    push cx
+    push dx
+    mov cx, 0x0000
+    mov dx, 0x2710
+    call delay
+    pop dx
+    pop cx
+    inc ax
+    cmp bp, 0
+    jg .err_pos
+    push ax
+    shl ax, 1
+    add bp, ax
+    inc bp
+    pop ax
+    jmp .loop
+.err_pos:
+    dec di
+    push ax
+    push di
+    sub ax, di
+    shl ax, 1
+    add bp, ax
+    inc bp
+    pop di
+    pop ax
+    jmp .loop
+.done:
+    popa
+    ret
+
+.plot8:
+    pusha
+    ; Point 1
+    push cx
+    push dx
+    add cx, di
+    add dx, ax
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 2
+    push cx
+    push dx
+    sub cx, di
+    add dx, ax
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 3
+    push cx
+    push dx
+    add cx, di
+    sub dx, ax
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 4
+    push cx
+    push dx
+    sub cx, di
+    sub dx, ax
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 5
+    push cx
+    push dx
+    add cx, ax
+    add dx, di
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 6
+    push cx
+    push dx
+    sub cx, ax
+    add dx, di
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 7
+    push cx
+    push dx
+    add cx, ax
+    sub dx, di
+    call draw_pixel
+    pop dx
+    pop cx
+    ; Point 8
+    push cx
+    push dx
+    sub cx, ax
+    sub dx, di
+    call draw_pixel
+    pop dx
+    pop cx
+    popa
+    ret
